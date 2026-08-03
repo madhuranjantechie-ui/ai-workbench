@@ -44,7 +44,7 @@ try:
             {"role": "system", "content": "You are a helpful assistant. Be concise."},
             {"role": "user", "content": "What is generative AI in one sentence?"},
         ],
-        temperature=0.6,
+        temperature=0,
         max_tokens=100,
     )
 
