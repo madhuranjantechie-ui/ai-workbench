@@ -21,7 +21,6 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 # --- PROMPT TEMPLATES ---
@@ -46,14 +45,17 @@ TASKS = {
 }
 
 
-def call_llm(system_prompt: str, user_text: str) -> dict:
+def call_llm(system_prompt: str, user_text: str, client_instance=None) -> dict:
     """
     Call the LLM with a system prompt and user text.
     Returns dict with 'content', 'tokens', and 'model' keys.
     Handles errors gracefully with specific messages.
     """
     try:
-        response = client.chat.completions.create(
+        # Create the client only when a request is actually made. This keeps the
+        # friendly setup error in main() reachable and makes the function testable.
+        client_instance = client_instance or OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client_instance.chat.completions.create(
             model=MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -63,8 +65,8 @@ def call_llm(system_prompt: str, user_text: str) -> dict:
             max_tokens=500,
         )
         return {
-            "content": response.choices[0].message.content,
-            "tokens": response.usage.total_tokens,
+            "content": response.choices[0].message.content or "",
+            "tokens": response.usage.total_tokens if response.usage else 0,
             "model": response.model,
         }
     except AuthenticationError:

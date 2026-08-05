@@ -19,7 +19,6 @@ from openai import OpenAI
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 SAMPLE_TEXT = """
@@ -35,12 +34,15 @@ total_tokens = 0
 total_calls = 0
 
 
-def call_llm(prompt: str, temperature: float = 0.7) -> tuple[str, int]:
+def call_llm(prompt: str, temperature: float = 0.7, client_instance=None) -> tuple[str, int]:
     """Call the LLM and return (response_text, tokens_used)."""
     global total_tokens, total_calls
     start = time.time()
 
-    response = client.chat.completions.create(
+    # Instantiate only for a real request so startup can display a helpful
+    # missing-key message instead of failing while the module is imported.
+    client_instance = client_instance or OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client_instance.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=temperature,
@@ -149,7 +151,7 @@ def experiment_temperature():
             print("  → Outputs DIFFER (probabilistic sampling)")
 
     print("\n  OBSERVATION:")
-    print("  → temp=0: Same output every time. Use for factual/consistent tasks.")
+    print("  → temp=0: Usually the most consistent output. Use for factual/consistent tasks.")
     print("  → temp=0.7: Balanced. Good default for most applications.")
     print("  → temp=1.5: High variance. Use for creative/brainstorming tasks.")
 
@@ -191,10 +193,13 @@ if __name__ == "__main__":
         "4": experiment_temperature,
     }
 
-    if len(sys.argv) > 1 and sys.argv[1] in experiments:
-        experiments[sys.argv[1]]()
-    else:
+    if len(sys.argv) == 1:
         for exp in experiments.values():
             exp()
+    elif sys.argv[1] in experiments:
+        experiments[sys.argv[1]]()
+    else:
+        print("Usage: python prompt_experiment.py [1|2|3|4]")
+        sys.exit(2)
 
     print_summary()
