@@ -13,7 +13,7 @@ st.set_page_config(page_title="AI Workbench", page_icon="🤖", layout="centered
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 st.title("AI Workbench")
-st.caption("Powered by LLM — Select a task, paste your text, get results.")
+st.caption("Powered by @Madhuranjan — Select a task, paste your text, get results.")
 
 task = st.selectbox(
     "Choose a task:",
